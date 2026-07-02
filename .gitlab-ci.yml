@@ -1,0 +1,26 @@
+stages:
+  - deploy
+
+deploy-dev:
+  extends: .deploy
+  variables:
+    OUTPUT_DIR: '2026/260000'
+
+.deploy:
+  image: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/alpine:latest
+  stage: deploy
+  variables:
+    DEV_SSH_PORT: '22'
+  tags:
+    - frontend
+  only:
+    - dev
+  before_script:
+    - apk update && apk add --no-cache rsync openssh-client
+    - eval $(ssh-agent -s)
+    - echo "$DEV_SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 0700 ~/.ssh
+  script:
+    - rsync -rv --exclude=".*/" ./ /mnt/diskstation/web/dev/$OUTPUT_DIR/
+    - ssh -o StrictHostKeyChecking=no $DEV_SSH_USER@$DEV_SSH_HOST -p $DEV_SSH_PORT "cd /mnt/storage/web/dev/$OUTPUT_DIR; composer update;"

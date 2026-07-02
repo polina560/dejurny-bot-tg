@@ -1,0 +1,65 @@
+<?php
+
+namespace UserCommands;
+
+use Longman\TelegramBot\Entities\Keyboard;
+use Longman\TelegramBot\Request;
+use Longman\TelegramBot\Commands\UserCommand;
+use Longman\TelegramBot\Entities\ServerResponse;
+
+class MessageHandlerCommand extends UserCommand
+{
+    protected $name = 'messagehandler';
+    protected $description = 'Обрабатывает ввод имени';
+    protected $usage = '';
+    protected $version = '1.0';
+
+    public function execute(): ServerResponse
+    {
+        $chat_id     = $this->getMessage()->getChat()->getId();
+        $telegram_id = $this->getMessage()->getFrom()->getId();
+        $text        = trim($this->getMessage()->getText());
+        $config = require __DIR__ . '/../../../config.php';
+        $pdo    = new \PDO(
+            'mysql:host=' . $config['db']['host'] . ';dbname=' . $config['db']['database'],
+            $config['db']['user'],
+            $config['db']['password']
+        );
+        $fsm     = new \FSM($pdo);
+        $session = $fsm->getState($telegram_id);
+        if ($session['state'] === 'waiting_name') {
+            if (mb_strlen($text) < 2) {
+                return Request::sendMessage([
+                    'chat_id' => $chat_id,
+                    'text'    => 'Имя слишком короткое. Напиши ещё раз.'
+                ]);
+            }
+            $stmt = $pdo->prepare("
+                INSERT INTO `user` (id, custom_name)
+                VALUES (:id, :custom_name)
+                ON DUPLICATE KEY UPDATE custom_name = :custom_name
+            ");
+            $stmt->execute([
+                ':id'          => $telegram_id,
+                ':custom_name' => $text
+            ]);
+            file_put_contents(__DIR__ . '/__name_log.log', "$telegram_id saved: $text\n", FILE_APPEND);
+            $fsm->clearState($telegram_id);
+            $keyboard = new Keyboard(
+                ['Опоздание'],
+                ['Ушел на больничный'],
+                ['Выхожу с больничного'],
+                ['Изменение расписания'],
+                ['Форс-мажор'],
+                ['Другое']
+            );
+            $keyboard->setResizeKeyboard(true);
+            return Request::sendMessage([
+                'chat_id'      => $chat_id,
+                'text'         => "Спасибо, $text! Выбери действие из меню ниже.",
+                'reply_markup' => $keyboard,
+            ]);
+        }
+        return Request::emptyResponse();
+    }
+}
