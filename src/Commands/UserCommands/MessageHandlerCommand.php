@@ -2,6 +2,7 @@
 
 namespace UserCommands;
 
+use Longman\TelegramBot\Entities\InlineKeyboard;
 use Longman\TelegramBot\Entities\Keyboard;
 use Longman\TelegramBot\Request;
 use Longman\TelegramBot\Commands\UserCommand;
@@ -44,19 +45,9 @@ class MessageHandlerCommand extends UserCommand
                 ':custom_name' => $text
             ]);
             $fsm->clearState($telegram_id);
-            $keyboard = new Keyboard(
-                ['Опоздание'],
-                ['Ушел на больничный'],
-                ['Выхожу с больничного'],
-                ['Изменение расписания'],
-                ['Форс-мажор'],
-                ['Другое']
-            );
-            $keyboard->setResizeKeyboard(true);
             return Request::sendMessage([
                 'chat_id'      => $chat_id,
-                'text'         => "Спасибо, $text! Выбери действие из меню ниже.",
-                'reply_markup' => $keyboard,
+                'text'         => "Хочешь отправить новое сообщение? Нажми «Меню»",
             ]);
         }
         return Request::emptyResponse();
