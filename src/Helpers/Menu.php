@@ -1,56 +1,29 @@
 <?php
-use Longman\TelegramBot\Entities\ServerResponse;
-use Longman\TelegramBot\Request;
-use Longman\TelegramBot\Entities\Keyboard;
 
-function sendMainMenu(int $chat_id): ServerResponse
+use Longman\TelegramBot\Entities\InlineKeyboard;
+
+function confirmDelayKeyboard(): InlineKeyboard
 {
-    $keyboard = new Keyboard(
-        ['Опоздание'],
-        ['Ушел на больничный'],
-        ['Выхожу с больничного'],
-        ['Изменение расписания'],
-        ['Форс-мажор'],
-        ['Другое...']
+    return new InlineKeyboard(
+        [
+            ['text' => '✅ Да', 'callback_data' => 'yes'],
+            ['text' => '❌ Исправить', 'callback_data' => 'edit']
+        ],
+        [
+            ['text' => '🏠 Главная', 'callback_data' => 'main']
+        ]
     );
-    $keyboard->setResizeKeyboard(true)->setOneTimeKeyboard(true);
-    return Request::sendMessage([
-        'chat_id' => $chat_id,
-        'text' => 'Выбери действие:',
-        'reply_markup' => $keyboard,
+}
+function navigationKeyboard(): InlineKeyboard
+{
+    return new InlineKeyboard([
+        ['text' => '⬅️ Назад', 'callback_data' => 'back'],
+        ['text' => '🏠 Главная', 'callback_data' => 'main'],
     ]);
 }
-if (!function_exists('navigationKeyboard')) {
-    /**ну ладно
-     * @param array $custom_buttons
-     * @return array
-     */
-    function navigationKeyboard(array $custom_buttons): array
-    {
-        $keyboard = $custom_buttons;
-        $keyboard[] = ['Назад'];
-        $keyboard[] = ['Главное меню'];
-        return [
-            'keyboard' => $keyboard,
-            'resize_keyboard' => true,
-            'one_time_keyboard' => true,
-        ];
-    }
-}
-
-if (!function_exists('mainMenuKeyboard')) {
-    /**
-     * @param array @custom_button
-     * @return array
-     */
-    function mainMenuKeyboard(array $custom_button): array
-    {
-        $keyboard = $custom_button;
-        $keyboard[] = ['Главное меню'];
-        return [
-            'keyboard' => $keyboard,
-            'resize_keyboard' => true,
-            'one_time_keyboard' => true,
-        ];
-    }
+function mainMenuKeyboard(): InlineKeyboard
+{
+    return new InlineKeyboard([
+        ['text' => '🏠 Главная', 'callback_data' => 'main'],
+    ]);
 }

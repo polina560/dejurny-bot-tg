@@ -3,9 +3,10 @@
 namespace SystemCommands;
 
 use Longman\TelegramBot\Commands\SystemCommand;
+use Longman\TelegramBot\Entities\InlineKeyboard;
 use Longman\TelegramBot\Entities\ServerResponse;
 use Longman\TelegramBot\Request;
-
+use Longman\TelegramBot\Entities\Keyboard;
 require_once __DIR__ . '/../../Helpers/Menu.php';
 
 class GenericmessageCommand extends SystemCommand
@@ -44,40 +45,18 @@ class GenericmessageCommand extends SystemCommand
             ]);
             $session['data']['custom_name'] = $text;
             $fsm->setState($telegram_id, null, $session['data']);
-            $keyboard = new Keyboard(
-                ['Опоздание'],
-                ['Ушел на больничный'],
-                ['Выхожу с больничного'],
-                ['Изменение расписания'],
-                ['Форс-мажор'],
-                ['Другое...']
-            );
-            $keyboard->setResizeKeyboard(true)->setOneTimeKeyboard(true);
+            Request::sendMessage([
+                'chat_id'      => $chat_id,
+                'text'         => "Спасибо, $text! Теперь можем продолжать."
+            ]);
             return Request::sendMessage([
                 'chat_id'      => $chat_id,
-                'text'         => "Спасибо, $text! Теперь можем продолжать.",
-                'reply_markup' => $keyboard
+                'text'         => "Хочешь о чем-то сообщить? Нажми «Меню»"
             ]);
         }
         if (!empty($session['data']['command'])) {
             $command = $session['data']['command'];
             return $this->telegram->executeCommand($command);
-        }
-        switch ($text) {
-            case 'Старт':
-                return $this->telegram->executeCommand('start');
-            case 'Опоздание':
-                return $this->telegram->executeCommand('delay');
-            case 'Ушел на больничный':
-                return $this->telegram->executeCommand('sick');
-            case 'Выхожу с больничного':
-                return $this->telegram->executeCommand('return_sick');
-            case 'Изменение расписания':
-                return $this->telegram->executeCommand('schedule');
-            case 'Форс-мажор':
-                return $this->telegram->executeCommand('absence');
-            case 'Другое...':
-                return $this->telegram->executeCommand('other');
         }
         if (!empty($session['data']['custom_name'])) {
             return Request::sendMessage([

@@ -3,11 +3,13 @@
 namespace UserCommands;
 
 use Longman\TelegramBot\Commands\UserCommand;
+use Longman\TelegramBot\Entities\InlineKeyboard;
 use Longman\TelegramBot\Entities\ServerResponse;
 use Longman\TelegramBot\Request;
 
 require_once __DIR__ . '/../../../FSM.php';
 require_once __DIR__ . '/../../Helpers/Menu.php';
+require_once __DIR__ . '/../../Helpers/escapeMarkdownV2.php';
 
 use function \navigationKeyboard;
 use function \mainMenuKeyboard;
@@ -22,12 +24,32 @@ class SickCommand extends UserCommand
     public function execute(): ServerResponse
     {
         $config = require __DIR__ . '/../../../config.php';
+        file_put_contents(__DIR__ . '/../../../storage/logs/debug_sick.log', date('c') . " START execute\n", FILE_APPEND);
+        $callback = $this->getCallbackQuery();
         $message = $this->getMessage();
-        $chat_id = $message->getChat()->getId();
-        $telegram_id = $message->getFrom()->getId();
-        $text = trim($message->getText(true));
+        file_put_contents(__DIR__ . '/../../../storage/logs/debug_sick.log', date('c') . " callback: " . json_encode($callback) . ", message: " . json_encode($message) . "\n", FILE_APPEND);
+        if ($message) {
+            $message_id = $message->getMessageId();
+            $telegram_id = $message->getFrom()->getId();
+            $chat_id = $message->getChat()->getId();
+            $username = $message->getFrom()->getUsername();
+            $text = trim($message->getText(true));
+        } elseif ($callback) {
+            $message_id = $callback->getMessage()->getMessageId();
+            $telegram_id = $callback->getFrom()->getId();
+            $chat_id = $callback->getMessage()->getChat()->getId();
+            $username = $callback->getFrom()->getUsername();
+            $text = '';
+        } else {
+            file_put_contents(__DIR__ . '/../../../storage/logs/debug_sick.log', date('c') . " No message or callback, returning empty\n", FILE_APPEND);
+            return Request::emptyResponse();
+        }
+        file_put_contents(__DIR__ . '/../../../storage/logs/debug_sick.log', date('c') . " telegram_id: $telegram_id, chat_id: $chat_id, username: $username, text: '$text'\n", FILE_APPEND);
         $pdo = new \PDO(
-            'mysql:host=' . $config['db']['host'] . ';dbname=' . $config['db']['database'], $config['db']['user'], $config['db']['password']);
+            'mysql:host=' . $config['db']['host'] . ';dbname=' . $config['db']['database'],
+            $config['db']['user'],
+            $config['db']['password']
+        );
         $fsm = new \FSM($pdo);
         $session = $fsm->getState($telegram_id);
         $stmt = $pdo->prepare("SELECT custom_name FROM `user` WHERE id= :id");
@@ -38,83 +60,132 @@ class SickCommand extends UserCommand
         $data = $session['data'] ?? [];
         $data['command'] = 'sick';
         $manager_chat_id = $config['manager_chat_id'];
-        $confirm_keyboard = [['Да'], ['Исправить']];
-        $keyboard = [
-            ['Да, буду работать из дома'], ['Могу при необходимости'],
-            ['Нет возможности/не позволяет состояние работать'],
-        ];
-        $miss_keyboard = [['Пропустить']];
-        if (mb_strtolower($text) === 'главное меню') {
-            $fsm->clearState($telegram_id);
-            return sendMainMenu($chat_id);
-        }
-        if (mb_strtolower($text) === 'назад') {
-            $prev_state = $data['prev_state'] ?? null;
-            if ($prev_state === 'wait_days') {
-                $fsm->setState($telegram_id, 'wait_days', $data);
-                return Request::sendMessage([
-                    'chat_id' => $chat_id,
-                    'text' => 'Подскажи, ориентировочно сколько дней ты будешь отсутствовать?',
-                    'reply_markup' => mainMenuKeyboard([]),
-                ]);
-            }
-            if ($prev_state === 'wait_remote') {
-                $fsm->setState($telegram_id, 'wait_remote', $data);
-                return Request::sendMessage([
-                    'chat_id' => $chat_id,
-                    'text' => 'Будет ли возможность работать из дома?',
-                    'reply_markup' => navigationKeyboard($keyboard),
-                ]);
+        file_put_contents(__DIR__ . '/../../../storage/logs/debug_sick.log', date('c') . " FSM state: " . json_encode($state) . ", data: " . json_encode($data) . "\n", FILE_APPEND);
+        $miss_keyboard = new InlineKeyboard(
+            [
+                ['text' => 'Пропустить', 'callback_data' => 'skip']
+            ],
+            [
+                ['text' => '⬅️ Назад', 'callback_data' => 'back'],
+                ['text' => '🏠 Главная', 'callback_data' => 'main'],
+            ]
+        );
+        $keyboard = new InlineKeyboard(
+            [
+                ['text' => 'Да, буду работать из дома', 'callback_data' => 'yes, work in home'],
+            ],
+            [
+                ['text' => 'Могу при необходимости', 'callback_data' => 'so so'],
+            ],
+            [
+                ['text' => 'Нет возможности работать', 'callback_data' => 'no, work in home'],
+            ],
+            [
+                ['text' => '⬅️ Назад', 'callback_data' => 'back'],
+                ['text' => '🏠 Главная', 'callback_data' => 'main'],
+            ],
+        );
+        if ($callback && $callback->getData() === 'back') {
+            $history = $data['history'] ?? [];
+            $prev = array_pop($history);
+            $data['history'] = $history;
+            switch ($prev) {
+                case 'wait_days':
+                    $fsm->setState($telegram_id, 'wait_days', $data);
+                    return Request::sendMessage([
+                        'chat_id' => $chat_id,
+                        'text' => "Подскажи, ориентировочно сколько дней ты будешь отсутствовать?",
+                        'reply_markup' => mainMenuKeyboard()
+                    ]);
+                case 'wait_remote':
+                    $fsm->setState($telegram_id, 'wait_remote', $data);
+                    return Request::sendMessage([
+                        'chat_id' => $chat_id,
+                        'text' => 'Будет ли возможность работать из дома?',
+                        'reply_markup' => $keyboard,
+                    ]);
+                case 'wait_comment':
+                    $fsm->setState($telegram_id, 'wait_comment', $data);
+                    return Request::sendMessage([
+                        'chat_id' => $chat_id,
+                        'text' => 'Если хочешь, добавь комментарий',
+                        'reply_markup' => $miss_keyboard,
+                    ]);
             }
         }
         switch ($state) {
             case 'wait_days':
+                Request::editMessageReplyMarkup([
+                    'chat_id' => $chat_id,
+                    'message_id' => $data['keyboard_message_id'],
+                    'reply_markup' => new InlineKeyboard([])
+                ]);
                 if (!is_numeric($text)) {
-                    if (mb_strlen($text) > 50) {
-                        return $this->replyToChat("Ошибка! Слишком много символов, сократи сообщение.");
-                    }
+                    return $this->replyToChat("Введи число.");
                 } else {
                     $days = (int)$text;
                     if ($days < 1 || $days > 99) {
-                        return $this->replyToChat("Ошибка! Укажи число меньше 100:");
+                        return $this->replyToChat("Слишком большое число. Скорректируй, пожалуйста");
                     }
                 }
                 $data['days'] = $text;
-                $data['prev_state'] = 'wait_days';
-                $fsm->setState($telegram_id, 'wait_remote', $data);
-                return Request::sendMessage([
+                $data['history'][] = $state;
+                $response = Request::sendMessage([
                     'chat_id' => $chat_id,
                     'text' => 'Будет ли возможность работать из дома?',
-                    'reply_markup' => navigationKeyboard($keyboard),
+                    'reply_markup' => $keyboard,
                 ]);
+                $data['keyboard_message_id'] = $response->getResult()->getMessageId();
+                $fsm->setState($telegram_id, 'wait_remote', $data);
+                return $response;
             case 'wait_remote':
-                $data['remote'] = $text;
-                $data['prev_state'] = 'wait_remote';
-                $valid_options = [
-                    'да, буду работать из дома',
-                    'могу при необходимости',
-                    'нет возможности/не позволяет состояние работать'
-                ];
-                if (!in_array(mb_strtolower($text), $valid_options)) {
+                Request::editMessageReplyMarkup([
+                    'chat_id' => $chat_id,
+                    'message_id' => $data['keyboard_message_id'],
+                    'reply_markup' => new InlineKeyboard([])
+                ]);
+                if (!$callback) {
                     return $this->replyToChat("Ошибка! Выбери вариант из кнопок!");
                 }
-                $fsm->setState($telegram_id, 'wait_comment', $data);
-                return Request::sendMessage([
+                $cb = $callback->getData();
+                if ($cb === 'yes, work in home') {
+                    $data['remote'] = 'Да, буду работать из дома';
+                    file_put_contents(__DIR__ . '/../../../storage/logs/debug_sick.log', date('c') . ", data: " . json_encode($data) . "\n", FILE_APPEND);
+                } elseif ($cb === 'no, work in home') {
+                    $data['remote'] = 'Нет возможности работать';
+                } elseif ($cb === 'so so') {
+                    $data['remote'] = 'Могу при необходимости';
+                } else {
+                    return $this->replyToChat("Ошибка! Выбери вариант из кнопок!");
+                }
+                $data['history'][] = $state;
+                $response = Request::sendMessage([
                     'chat_id' => $chat_id,
                     'text' => 'Если хочешь, добавь комментарий',
-                    'reply_markup' => navigationKeyboard($miss_keyboard),
+                    'reply_markup' => $miss_keyboard,
                 ]);
+                $data['keyboard_message_id'] = $response->getResult()->getMessageId();
+                $fsm->setState($telegram_id, 'wait_comment', $data);
+                return $response;
             case 'wait_comment':
-                if (mb_strtolower($text) === 'пропустить') {
+                Request::editMessageReplyMarkup([
+                    'chat_id' => $chat_id,
+                    'message_id' => $data['keyboard_message_id'],
+                    'reply_markup' => new InlineKeyboard([])
+                ]);
+                if ($callback && $callback->getData() === 'skip') {
                     $data['comment'] = '';
                 } else {
-                    $data['comment'] = $text;
+                    if (empty($text)) {
+                        return $this->replyToChat("Ошибка! Напиши комментарий или нажми 'Пропустить'");
+                    }
                     if (mb_strlen($text) > 100) {
                         return $this->replyToChat("Ошибка! Комментарий слишком длинный!");
                     }
+                    $data['comment'] = $text;
                 }
-                $data['prev_state'] = 'wait_comment';
-                $fsm->setState($telegram_id, 'confirm', $data);
+                file_put_contents(__DIR__ . '/../../../storage/logs/debug_sick.log', ", data: " . json_encode($data) . "\n", FILE_APPEND);
+                $data['history'][] = $state;
                 $reply = "Проверь информацию:\n\n";
                 $reply .= "Ориентировочно дней отсутствия: {$data['days']}\n";
                 $reply .= "Возможность работать из дома: {$data['remote']}\n";
@@ -122,24 +193,32 @@ class SickCommand extends UserCommand
                     $reply .= "Комментарий: {$data['comment']}\n";
                 }
                 $reply .= "\nВсе верно? Напиши 'Да' или 'Исправить'";
-                return Request::sendMessage([
+                $response = Request::sendMessage([
                     'chat_id' => $chat_id,
                     'text' => $reply,
-                    'reply_markup' => mainMenuKeyboard($confirm_keyboard),
+                    'reply_markup' => confirmDelayKeyboard(),
                 ]);
+                $data['keyboard_message_id'] = $response->getResult()->getMessageId();
+                $fsm->setState($telegram_id, 'confirm', $data);
+                return $response;
             case 'confirm':
-                if (mb_strtolower($text) === 'да') {
-                    $msg = "🚨 *Больничный*\n";
-                    $msg .= $custom_name . " (" . "@" . $message->getFrom()->getUsername() . ")\n";
-                    $msg .= "Ориентировочно дней отсутствия: `" . $data['days'] . "`\n";
-                    $msg .= "Возможность работать из дома: `{$data['remote']}`\n";
+                if ($callback && $callback->getData() === 'yes') {
+                    Request::editMessageReplyMarkup([
+                        'chat_id' => $chat_id,
+                        'message_id' => $data['keyboard_message_id'],
+                        'reply_markup' => new InlineKeyboard([])
+                    ]);
+                    $msg = "💊 *Больничный*\n";
+                    $msg .= escapeMarkdownV2($custom_name) . " \\(" . escapeMarkdownV2("@" . $username) . "\\)\n";
+                    $msg .= "Ориентировочно дней отсутствия: `" . escapeMarkdownV2($data['days']) . "`\n";
+                    $msg .= "Возможность работать из дома: `" . escapeMarkdownV2($data['remote']) . "`\n";
                     if (!empty($data['comment'])) {
                         $msg .= "Комментарий: `{$data['comment']}`\n";
                     }
                     Request::sendMessage([
                         'chat_id' => $manager_chat_id,
                         'text' => $msg,
-                        'parse_mode' => 'Markdown'
+                        'parse_mode' => 'MarkdownV2'
                     ]);
                     $bd = "Ориентировочно дней отсутствия: " . $data['days'] . "\n";
                     $bd .= "Возможность работать из дома: {$data['remote']}";
@@ -152,36 +231,67 @@ class SickCommand extends UserCommand
                     $stmt->execute([
                         ':user_id' => $telegram_id,
                         ':custom_name' => $custom_name,
-                        ':event_type' => 'sick',
+                        ':event_type' => 'Больничный',
                         ':message_content' => $bd
                     ]);
+                    $media = $config['sick_media'][array_rand($config['sick_media'])];
+                    if ($media['type'] === 'gif') {
+                        Request::sendAnimation([
+                            'chat_id' => $chat_id,
+                            'animation' => $media['url'],
+                            'caption' => 'Поправляйся, мы тебя ждём!'
+                        ]);
+                    } else {
+                        Request::sendPhoto([
+                            'chat_id' => $chat_id,
+                            'photo' => $media['url'],
+                            'caption' => 'Поправляйся, мы тебя ждём!'
+                        ]);
+                    }
                     $fsm->clearState($telegram_id);
                     Request::sendMessage([
                         'chat_id' => $chat_id,
-                        'text' => 'Готово! Информация передана руководству',
+                        'text' => "Готово! Информация передана руководству.",
                     ]);
-                    return sendMainMenu($chat_id);
-                } elseif (mb_strtolower($text) === 'исправить') {
-                    $fsm->setState($telegram_id, 'wait_days', $data);
                     return Request::sendMessage([
+                        'chat_id' => $chat_id,
+                        'text' => "Хочешь отправить новое сообщение? Нажми «Меню»"
+                    ]);
+                } elseif ($callback && $callback->getData() === 'edit') {
+                    Request::editMessageReplyMarkup([
+                        'chat_id' => $chat_id,
+                        'message_id' => $data['keyboard_message_id'],
+                        'reply_markup' => new InlineKeyboard([])
+                    ]);
+                    $response = Request::sendMessage([
                         'chat_id' => $chat_id,
                         'text' => "Хорошо, начнем заново. Сколько дней будешь отсутствовать?",
                         'reply_markup' => mainMenuKeyboard([]),
                     ]);
+                    $data['keyboard_message_id'] = $response->getResult()->getMessageId();
+                    $fsm->setState($telegram_id, 'wait_days', $data);
+                    return $response;
                 } else {
+                    Request::editMessageReplyMarkup([
+                        'chat_id' => $chat_id,
+                        'message_id' => $data['keyboard_message_id'],
+                        'reply_markup' => new InlineKeyboard([])
+                    ]);
                     return Request::sendMessage([
                         'chat_id' => $chat_id,
-                        'text' => "Напиши 'Да' для подтверждения или 'Исправить', чтобы внести исправления.",
-                        'reply_markup' => mainMenuKeyboard($confirm_keyboard),
+                        'text' => "Нажми на кнопку 'Да' для подтверждения или 'Исправить', чтобы внести исправления.",
+                        'reply_markup' => confirmDelayKeyboard(),
                     ]);
                 }
             default:
-                $fsm->setState($telegram_id, 'wait_days', $data);
-                return Request::sendMessage([
+                $response = Request::sendMessage([
                     'chat_id' => $chat_id,
                     'text' => "Подскажи, ориентировочно сколько дней ты будешь отсутствовать?",
-                    'reply_markup' => mainMenuKeyboard([]),
+                    'reply_markup' => mainMenuKeyboard()
                 ]);
+                $data['keyboard_message_id'] = $response->getResult()->getMessageId();
+                $fsm->setState($telegram_id, 'wait_days', $data);
+                return $response;
         }
     }
 }
