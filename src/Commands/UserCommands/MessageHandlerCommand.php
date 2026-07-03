@@ -43,7 +43,6 @@ class MessageHandlerCommand extends UserCommand
                 ':id'          => $telegram_id,
                 ':custom_name' => $text
             ]);
-            file_put_contents(__DIR__ . '/__name_log.log', "$telegram_id saved: $text\n", FILE_APPEND);
             $fsm->clearState($telegram_id);
             $keyboard = new Keyboard(
                 ['Опоздание'],

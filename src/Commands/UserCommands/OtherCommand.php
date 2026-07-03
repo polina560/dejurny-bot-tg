@@ -72,13 +72,13 @@ class OtherCommand extends UserCommand
                 ]);
             case 'confirm':
                 if (mb_strtolower($text) === 'да') {
-                    $msg = "ℹ️ *Просто оповещение*\n";
-                    $msg .= $custom_name . " (" . "@" . $message->getFrom()->getUsername() . ")\n";
-                    $msg .= "`" . $data['text'] . "`" . "\n";
+                    $msg = "🔔 *Просто оповещение*\n";
+                    $msg .= escapeMarkdownV2($custom_name) . " \\(" . escapeMarkdownV2("@" . $message->getFrom()->getUsername()) . "\\)\n";
+                    $msg .= "`" . escapeMarkdownV2($data['text']) . "`\n";
                     Request::sendMessage([
                         'chat_id' => $manager_chat_id,
                         'text' => $msg,
-                        'parse_mode' => 'Markdown'
+                        'parse_mode' => 'MarkdownV2'
                     ]);
                     $stmt = $pdo->prepare("
                             INSERT INTO user_event_log (user_id, custom_name, event_type, message_content)
@@ -87,7 +87,7 @@ class OtherCommand extends UserCommand
                     $stmt->execute([
                         ':user_id' => $telegram_id,
                         ':custom_name' => $custom_name,
-                        ':event_type' => 'other',
+                        ':event_type' => 'Просто оповещение',
                         ':message_content' => $data['text']
                     ]);
                     $fsm->clearState($telegram_id);

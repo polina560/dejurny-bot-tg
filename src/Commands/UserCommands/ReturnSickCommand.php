@@ -83,13 +83,13 @@ class ReturnSickCommand extends UserCommand
                     $date = $text;
                 }
                 $data['prev_state'] = 'wait_data';
-                $msg = "🚨 *Выход с больничного*\n";
-                $msg .= $custom_name . " (" . "@" . $message->getFrom()->getUsername() . ")\n";
-                $msg .= "Дата выхода: `{$date}`\n";
+                $msg = "💪 *Выход с больничного*\n";
+                $msg .= escapeMarkdownV2($custom_name) . " \\(" . escapeMarkdownV2("@" . $message->getFrom()->getUsername()) . "\\)\n";
+                $msg .= "Дата выхода: `" . escapeMarkdownV2($date) . "`\n";
                 Request::sendMessage([
                     'chat_id' => $manager_chat_id,
                     'text' => $msg,
-                    'parse_mode' => 'Markdown'
+                    'parse_mode' => 'MarkdownV2'
                 ]);
                 try {
                     $stmt = $pdo->prepare("
@@ -99,7 +99,7 @@ class ReturnSickCommand extends UserCommand
                     $stmt->execute([
                         ':user_id' => $telegram_id,
                         ':custom_name' => $custom_name,
-                        ':event_type' => 'return_sick',
+                        ':event_type' => 'Выход с больничного',
                         ':message_content' => "Дата выхода: {$date}"
                     ]);
                 } catch (\PDOException $e) {
@@ -127,13 +127,13 @@ class ReturnSickCommand extends UserCommand
                 }
                 $date = $text;
                 $data['prev_state'] = 'wait_manual_date';
-                $msg = "🚨 *Выход с больничного*\n";
-                $msg .= $custom_name . " (" . "@" . $message->getFrom()->getUsername() . ")\n";
-                $msg .= "Дата выхода: `{$date}`\n";
+                $msg = "💪 *Выход с больничного*\n";
+                $msg .= escapeMarkdownV2($custom_name) . " \\(" . escapeMarkdownV2("@" . $message->getFrom()->getUsername()) . "\\)\n";
+                $msg .= "Дата выхода: `" . escapeMarkdownV2($date) . "`\n";
                 Request::sendMessage([
                     'chat_id' => $manager_chat_id,
                     'text' => $msg,
-                    'parse_mode' => 'Markdown'
+                    'parse_mode' => 'MarkdownV2'
                 ]);
                 $bd = "Дата выхода: {$date}";
                 try {
@@ -144,7 +144,7 @@ class ReturnSickCommand extends UserCommand
                     $stmt->execute([
                         ':user_id' => $telegram_id,
                         ':custom_name' => $custom_name,
-                        ':event_type' => 'return_sick',
+                        ':event_type' => 'Выход с больничного',
                         ':message_content' => $bd
                     ]);
                 } catch (\PDOException $e) {

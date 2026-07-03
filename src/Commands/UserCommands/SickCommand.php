@@ -8,7 +8,7 @@ use Longman\TelegramBot\Request;
 
 require_once __DIR__ . '/../../../FSM.php';
 require_once __DIR__ . '/../../Helpers/Menu.php';
-
+require_once __DIR__ . '/../../Helpers/escapeMarkdownV2.php';
 use function \navigationKeyboard;
 use function \mainMenuKeyboard;
 
@@ -76,7 +76,7 @@ class SickCommand extends UserCommand
                 } else {
                     $days = (int)$text;
                     if ($days < 1 || $days > 99) {
-                        return $this->replyToChat("Ошибка! Укажи число меньше 100:");
+                        return $this->replyToChat("Слишком большое число. Скорректируй, пожалуйста");
                     }
                 }
                 $data['days'] = $text;
@@ -129,17 +129,17 @@ class SickCommand extends UserCommand
                 ]);
             case 'confirm':
                 if (mb_strtolower($text) === 'да') {
-                    $msg = "🚨 *Больничный*\n";
-                    $msg .= $custom_name . " (" . "@" . $message->getFrom()->getUsername() . ")\n";
-                    $msg .= "Ориентировочно дней отсутствия: `" . $data['days'] . "`\n";
-                    $msg .= "Возможность работать из дома: `{$data['remote']}`\n";
+                    $msg = "💊 *Больничный*\n";
+                    $msg .= escapeMarkdownV2($custom_name) . " \\(" . escapeMarkdownV2("@" . $message->getFrom()->getUsername()) . "\\)\n";
+                    $msg .= "Ориентировочно дней отсутствия: `" . escapeMarkdownV2($data['days']) . "`\n";
+                    $msg .= "Возможность работать из дома: `" . escapeMarkdownV2($data['remote']) . "`\n";
                     if (!empty($data['comment'])) {
                         $msg .= "Комментарий: `{$data['comment']}`\n";
                     }
                     Request::sendMessage([
                         'chat_id' => $manager_chat_id,
                         'text' => $msg,
-                        'parse_mode' => 'Markdown'
+                        'parse_mode' => 'MarkdownV2'
                     ]);
                     $bd = "Ориентировочно дней отсутствия: " . $data['days'] . "\n";
                     $bd .= "Возможность работать из дома: {$data['remote']}";
@@ -152,9 +152,23 @@ class SickCommand extends UserCommand
                     $stmt->execute([
                         ':user_id' => $telegram_id,
                         ':custom_name' => $custom_name,
-                        ':event_type' => 'sick',
+                        ':event_type' => 'Больничный',
                         ':message_content' => $bd
                     ]);
+                    $media = $config['sick_media'][array_rand($config['sick_media'])];
+                    if ($media['type'] === 'gif') {
+                        Request::sendAnimation([
+                            'chat_id' => $chat_id,
+                            'animation' => $media['url'],
+                            'caption' => 'Поправляйся, мы тебя ждём!'
+                        ]);
+                    } else {
+                        Request::sendPhoto([
+                            'chat_id' => $chat_id,
+                            'photo' => $media['url'],
+                            'caption' => 'Поправляйся, мы тебя ждём!'
+                        ]);
+                    }
                     $fsm->clearState($telegram_id);
                     Request::sendMessage([
                         'chat_id' => $chat_id,

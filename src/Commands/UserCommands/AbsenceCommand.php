@@ -151,15 +151,15 @@ class AbsenceCommand extends UserCommand
                 ]);
             case 'confirm':
                 if (mb_strtolower($text) === 'да') {
-                    $msg = "🚨 *Отсутствие на работе*\n";
-                    $msg .= $custom_name . " (" . "@" . $message->getFrom()->getUsername() . ")\n";
-                    $msg .= "Тип: `{$data['type']}`\n";
-                    $msg .= "Длительность: `{$data['duration']}`\n";
-                    $msg .= "Причина: `{$data['reason']}`\n";
+                    $msg = "⚠️ *Отсутствие на работе*\n";
+                    $msg .= escapeMarkdownV2($custom_name) . " \\(" . escapeMarkdownV2("@" . $message->getFrom()->getUsername()) . "\\)\n";
+                    $msg .= "Тип: `" . escapeMarkdownV2($data['type']) . "`\n";
+                    $msg .= "Длительность: `" . escapeMarkdownV2($data['duration']) . "`\n";
+                    $msg .= "Причина: `" . escapeMarkdownV2($data['reason']) . "`\n";
                     Request::sendMessage([
                         'chat_id' => $manager_chat_id,
                         'text' => $msg,
-                        'parse_mode' => 'Markdown'
+                        'parse_mode' => 'MarkdownV2'
                     ]);
                     $bd = "Тип: {$data['type']}\n";
                     $bd .= "Длительность: {$data['duration']}\n";
@@ -171,7 +171,7 @@ class AbsenceCommand extends UserCommand
                     $stmt->execute([
                         ':user_id' => $telegram_id,
                         ':custom_name' => $custom_name,
-                        ':event_type' => 'absence',
+                        ':event_type' => 'Отсутствие на работе',
                         ':message_content' => $bd
                     ]);
                     $fsm->clearState($telegram_id);

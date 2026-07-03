@@ -46,9 +46,9 @@ class GenericmessageCommand extends SystemCommand
             $fsm->setState($telegram_id, null, $session['data']);
             $keyboard = new Keyboard(
                 ['Опоздание'],
-                ['Ушел на больничный'],
+                ['Заболел'],
                 ['Выхожу с больничного'],
-                ['Изменение расписания'],
+                ['Изменение расписания (для студентов)'],
                 ['Форс-мажор'],
                 ['Другое...']
             );
@@ -68,11 +68,11 @@ class GenericmessageCommand extends SystemCommand
                 return $this->telegram->executeCommand('start');
             case 'Опоздание':
                 return $this->telegram->executeCommand('delay');
-            case 'Ушел на больничный':
+            case 'Заболел':
                 return $this->telegram->executeCommand('sick');
             case 'Выхожу с больничного':
                 return $this->telegram->executeCommand('return_sick');
-            case 'Изменение расписания':
+            case 'Изменение расписания (для студентов)':
                 return $this->telegram->executeCommand('schedule');
             case 'Форс-мажор':
                 return $this->telegram->executeCommand('absence');

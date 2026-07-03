@@ -2,11 +2,14 @@
 namespace UserCommands;
 
 use Longman\TelegramBot\Commands\UserCommand;
-use Longman\TelegramBot\Entities\Keyboard;
 use Longman\TelegramBot\Entities\ServerResponse;
 use Longman\TelegramBot\Request;
+use Helpers\TelegramLogger;
 require_once __DIR__ . '/../../../FSM.php';
 require_once __DIR__ . '/../../Helpers/Menu.php';
+require_once __DIR__ . '/../../Helpers/LimitMessage.php';
+require_once __DIR__ . '/../../Helpers/TelegramLogger.php';
+require_once __DIR__ . '/../../Helpers/escapeMarkdownV2.php';
 use function \navigationKeyboard;
 use function \mainMenuKeyboard;
 
@@ -105,15 +108,17 @@ class DelayCommand extends UserCommand{
                 ]);
             case 'confirm':
                 if (mb_strtolower($text) === 'да'){
-                    $msg = "🚨 *Опоздание*\n";
-                    $msg .= $custom_name . " (" . "@" . $message->getFrom()->getUsername() . ")\n";
+                    $msg = "⏰ *Опоздание*\n";
+                    $msg .= escapeMarkdownV2($custom_name) . " \\(" . escapeMarkdownV2("@" . $message->getFrom()->getUsername()) . "\\)\n";
                     $msg .= "Опоздание на: `" . $data['delay_minutes'] . " мин`\n";
-                    $msg .= "Комментарий: `" . $data['reason'] . "`\n";
-                    Request::sendMessage([
+                    $msg .= "Комментарий: `" . escapeMarkdownV2($data['reason']) . "`\n";
+                    $parame = [
                         'chat_id' => $manager_chat_id,
                         'text' => $msg,
-                        'parse_mode' => 'Markdown'
-                    ]);
+                        'parse_mode' => 'MarkdownV2'
+                    ];
+                    $response = Request::sendMessage($parame);
+                    TelegramLogger::log('sendMessage', $parame, $response, $telegram_id);
                     $bd = "Опоздание на: " . $data['delay_minutes'] . " мин\n";
                     $bd .= "Комментарий: " . $data['reason'];
                     $stmt = $pdo->prepare("
@@ -122,7 +127,7 @@ class DelayCommand extends UserCommand{
                     $stmt->execute([
                         ':user_id' => $telegram_id,
                         ':custom_name' => $custom_name,
-                        ':event_type' => 'delay',
+                        ':event_type' => 'Опоздание',
                         ':message_content' => $bd
                     ]);
                     $fsm->clearState($telegram_id);
@@ -136,7 +141,7 @@ class DelayCommand extends UserCommand{
                     return Request::sendMessage([
                         'chat_id' => $chat_id,
                         'text' => "Начнем заново. Укажи на сколько минут ты опаздываешь:",
-                        'reply_markup' => navigationKeyboard([])
+                        'reply_markup' => navigationKeyboard($time_keyboard)
                     ]);
                 } else {
                     return Request::sendMessage([

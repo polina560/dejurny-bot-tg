@@ -75,14 +75,14 @@ class ScheduleCommand extends UserCommand
             case 'confirm':
                 $data['prev_state'] = 'confirm';
                 if (mb_strtolower($text) === 'да') {
-                    $msg = "🚨 *Изменение в расписании*\n";
-                    $msg .= $custom_name . " (" . "@" . $message->getFrom()->getUsername() . ")\n";
+                    $msg = "📅 *Изменение в расписании*\n";
+                    $msg .= escapeMarkdownV2($custom_name) . " \\(" . escapeMarkdownV2("@" . $message->getFrom()->getUsername()) . "\\)\n";
                     $msg .= "Изменения в расписании:\n";
-                    $msg .= "`" . $data['schedule'] . "`" . "\n";
+                    $msg .= "`" . escapeMarkdownV2($data['schedule']) . "`\n";
                     Request::sendMessage([
                         'chat_id' => $manager_chat_id,
                         'text' => $msg,
-                        'parse_mode' => 'Markdown'
+                        'parse_mode' => 'MarkdownV2'
                     ]);
                     $bd = "Изменения в расписании: " . $data['schedule'];
                     $stmt = $pdo->prepare("
@@ -92,7 +92,7 @@ class ScheduleCommand extends UserCommand
                     $stmt->execute([
                         ':user_id' => $telegram_id,
                         ':custom_name' => $custom_name,
-                        ':event_type' => 'schedule',
+                        ':event_type' => 'Изменение в расписании',
                         ':message_content' => $bd
                     ]);
                     $fsm->clearState($telegram_id);
