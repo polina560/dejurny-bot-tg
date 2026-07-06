@@ -1,0 +1,108 @@
+2026-03-30T13:18:08+00:00 START
+2026-03-30T13:18:08+00:00 Reading input
+2026-03-30T13:18:08+00:00 INPUT: 
+2026-03-30T13:18:08+00:00 Autoload loaded
+2026-03-30T13:18:08+00:00 Config loaded
+2026-03-30T13:18:08+00:00 Telegram object created
+2026-03-30T13:18:08+00:00 Commands loaded
+2026-03-30T13:18:08+00:00 Before handle
+2026-03-30T13:18:08+00:00 ERROR: Input is empty! The webhook must not be called manually, only by Telegram.
+2026-03-30T13:18:08+00:00 #0 /mnt/storage/web/dev/2026/260000/public/webhook.php(37): Longman\TelegramBot\Telegram->handle()
+#1 {main}
+2026-03-30T13:18:45+00:00 START
+2026-03-30T13:18:45+00:00 Reading input
+2026-03-30T13:18:45+00:00 INPUT: 
+2026-03-30T13:18:45+00:00 Autoload loaded
+2026-03-30T13:18:45+00:00 Config loaded
+2026-03-30T13:18:45+00:00 Telegram object created
+2026-03-30T13:18:45+00:00 Commands loaded
+2026-03-30T13:18:45+00:00 Before handle
+2026-03-30T13:18:45+00:00 ERROR: Input is empty! The webhook must not be called manually, only by Telegram.
+2026-03-30T13:18:45+00:00 #0 /mnt/storage/web/dev/2026/260000/public/webhook.php(37): Longman\TelegramBot\Telegram->handle()
+#1 {main}
+2026-03-30T13:24:17+00:00 START
+2026-03-30T13:24:17+00:00 INPUT: 
+2026-03-30T13:24:17+00:00 Processing started
+2026-03-30T13:24:17+00:00 Autoload loaded
+2026-03-30T13:24:17+00:00 Config loaded
+2026-03-30T13:24:17+00:00 Telegram object created
+2026-03-30T13:24:17+00:00 Commands loaded
+2026-03-30T13:24:17+00:00 Before handle
+2026-03-30T13:24:17+00:00 ERROR: Input is empty! The webhook must not be called manually, only by Telegram.
+2026-03-30T13:24:17+00:00 #0 /mnt/storage/web/dev/2026/260000/public/webhook.php(43): Longman\TelegramBot\Telegram->handle()
+#1 {main}
+2026-03-30T13:36:31+00:00 START
+2026-03-30T13:36:31+00:00 INPUT: 
+2026-03-30T13:36:31+00:00 Processing started
+2026-03-30T13:36:31+00:00 Autoload loaded
+2026-03-30T13:36:31+00:00 Config loaded
+2026-03-30T13:36:31+00:00 Telegram object created
+2026-03-30T13:36:31+00:00 Commands loaded
+2026-03-30T13:36:31+00:00 Before handle
+2026-03-30T13:36:31+00:00 ERROR: Input is empty! The webhook must not be called manually, only by Telegram.
+2026-03-30T13:36:31+00:00 #0 /mnt/storage/web/dev/2026/260000/public/webhook.php(45): Longman\TelegramBot\Telegram->handle()
+#1 {main}
+2026-03-30T13:37:11+00:00 START
+2026-03-30T13:37:11+00:00 INPUT: 
+2026-03-30T13:37:11+00:00 Processing started
+2026-03-30T13:37:11+00:00 Autoload loaded
+2026-03-30T13:37:11+00:00 Config loaded
+2026-03-30T13:37:11+00:00 Telegram object created
+2026-03-30T13:37:11+00:00 Commands loaded
+2026-03-30T13:37:11+00:00 Before handle
+2026-03-30T13:37:11+00:00 ERROR: Input is empty! The webhook must not be called manually, only by Telegram.
+2026-03-30T13:37:11+00:00 #0 /mnt/storage/web/dev/2026/260000/public/webhook.php(45): Longman\TelegramBot\Telegram->handle()
+#1 {main}
+2026-03-30T13:37:16+00:00 START
+2026-03-30T13:37:16+00:00 INPUT: {"test":1}
+2026-03-30T13:37:16+00:00 Processing started
+2026-03-30T13:37:16+00:00 Autoload loaded
+2026-03-30T13:37:16+00:00 Config loaded
+2026-03-30T13:37:16+00:00 Telegram object created
+2026-03-30T13:37:16+00:00 Commands loaded
+2026-03-30T13:37:16+00:00 Before handle
+2026-03-30T13:37:16+00:00 ERROR: Longman\TelegramBot\DB::selectTelegramUpdate(): Argument #2 ($id) must be of type string, null given, called in /mnt/storage/web/dev/2026/260000/vendor/longman/telegram-bot/src/Telegram.php on line 649
+2026-03-30T13:37:16+00:00 #0 /mnt/storage/web/dev/2026/260000/vendor/longman/telegram-bot/src/Telegram.php(649): Longman\TelegramBot\DB::selectTelegramUpdate()
+#1 /mnt/storage/web/dev/2026/260000/vendor/longman/telegram-bot/src/Telegram.php(568): Longman\TelegramBot\Telegram->processUpdate()
+#2 /mnt/storage/web/dev/2026/260000/public/webhook.php(45): Longman\TelegramBot\Telegram->handle()
+#3 {main}
+2026-03-30T13:42:52+00:00 INPUT: 
+2026-03-30T13:42:52+00:00 Processing started
+2026-03-30T13:42:52+00:00 Autoload loaded
+2026-03-30T13:42:52+00:00 Config loaded
+2026-03-30T13:42:52+00:00 Telegram object created
+2026-03-30T13:42:52+00:00 Commands loaded
+2026-03-30T13:42:52+00:00 Before handle
+2026-03-30T13:42:52+00:00 ERROR: Input is empty! The webhook must not be called manually, only by Telegram.
+2026-03-30T13:42:52+00:00 #0 /mnt/storage/web/dev/2026/260000/public/webhook.php(35): Longman\TelegramBot\Telegram->handle()
+#1 {main}
+2026-03-30T14:11:41+00:00 INPUT: 
+2026-03-30T14:11:41+00:00 Processing started
+2026-03-30T14:11:41+00:00 Autoload loaded
+2026-03-30T14:11:41+00:00 Config loaded
+2026-03-30T14:11:41+00:00 Telegram object created
+2026-03-30T14:11:41+00:00 Commands loaded
+2026-03-30T14:11:41+00:00 Before handle
+2026-03-30T14:11:41+00:00 ERROR: Input is empty! The webhook must not be called manually, only by Telegram.
+2026-03-30T14:11:41+00:00 #0 /mnt/storage/web/dev/2026/260000/public/webhook.php(35): Longman\TelegramBot\Telegram->handle()
+#1 {main}
+2026-03-30T14:11:43+00:00 INPUT: 
+2026-03-30T14:11:43+00:00 Processing started
+2026-03-30T14:11:43+00:00 Autoload loaded
+2026-03-30T14:11:43+00:00 Config loaded
+2026-03-30T14:11:43+00:00 Telegram object created
+2026-03-30T14:11:43+00:00 Commands loaded
+2026-03-30T14:11:43+00:00 Before handle
+2026-03-30T14:11:43+00:00 ERROR: Input is empty! The webhook must not be called manually, only by Telegram.
+2026-03-30T14:11:43+00:00 #0 /mnt/storage/web/dev/2026/260000/public/webhook.php(35): Longman\TelegramBot\Telegram->handle()
+#1 {main}
+2026-03-30T15:37:02+00:00 INPUT: 
+2026-03-30T15:37:02+00:00 Processing started
+2026-03-30T15:37:02+00:00 Autoload loaded
+2026-03-30T15:37:02+00:00 Config loaded
+2026-03-30T15:37:02+00:00 Telegram object created
+2026-03-30T15:37:02+00:00 Commands loaded
+2026-03-30T15:37:02+00:00 Before handle
+2026-03-30T15:37:02+00:00 ERROR: Input is empty! The webhook must not be called manually, only by Telegram.
+2026-03-30T15:37:02+00:00 #0 /mnt/storage/web/dev/2026/260000/public/webhook.php(35): Longman\TelegramBot\Telegram->handle()
+#1 {main}

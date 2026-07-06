@@ -3,11 +3,13 @@
 namespace UserCommands;
 
 use Longman\TelegramBot\Commands\UserCommand;
+use Longman\TelegramBot\Entities\InlineKeyboard;
 use Longman\TelegramBot\Entities\Keyboard;
 use Longman\TelegramBot\Entities\ServerResponse;
 use Longman\TelegramBot\Request;
 use function \navigationKeyboard;
-
+use function \confirmDelayKeyboard;
+require_once __DIR__ . '/../../Helpers/escapeMarkdownV2.php';
 require_once __DIR__ . '/../../../FSM.php';
 
 class ScheduleCommand extends UserCommand
@@ -21,9 +23,22 @@ class ScheduleCommand extends UserCommand
     {
         $config = require __DIR__ . '/../../../config.php';
         $message = $this->getMessage();
-        $telegram_id = $message->getFrom()->getId();
-        $chat_id = $message->getChat()->getId();
-        $text = trim($message->getText(true));
+        $callback = $this->getCallbackQuery();
+        if ($message) {
+            $message_id = $message->getMessageId();
+            $telegram_id = $message->getFrom()->getId();
+            $chat_id = $message->getChat()->getId();
+            $username = $message->getFrom()->getUsername();
+            $text = trim($message->getText(true));
+        } elseif ($callback) {
+            $message_id = $callback->getMessage()->getMessageId();
+            $telegram_id = $callback->getFrom()->getId();
+            $chat_id = $callback->getMessage()->getChat()->getId();
+            $username = $callback->getFrom()->getUsername();
+            $text = '';
+        } else {
+            return Request::emptyResponse();
+        }
         $pdo = new \PDO(
             'mysql:host=' . $config['db']['host'] . ';dbname=' . $config['db']['database'],
             $config['db']['user'],
@@ -39,50 +54,52 @@ class ScheduleCommand extends UserCommand
         $data = $session['data'] ?? [];
         $data['command'] = 'schedule';
         $manager_chat_id = $config['manager_chat_id'];
-        $keyboard = [
-            ['Да'],
-            ['Исправить']
-        ];
-        if (mb_strtolower($text) === 'главное меню') {
-            $fsm->clearState($telegram_id);
-            return sendMainMenu($chat_id);
-        }
-        if (mb_strtolower($text) === 'назад') {
-            $prev_state = $data['prev_state'] ?? 'wait_days';
-            $fsm->setState($telegram_id, $prev_state, $data);
-            return $this->replyToChat("Вернулись на прошлый шаг");
-        }
         switch ($state) {
             case 'wait_text':
+                Request::editMessageReplyMarkup([
+                    'chat_id' => $chat_id,
+                    'message_id' => $data['keyboard_message_id'],
+                    'reply_markup' => new InlineKeyboard([])
+                ]);
+                if ($callback){
+                    return Request::emptyResponse();
+                }
                 if ($text === '') {
                     return $this->replyToChat('Опиши, что изменилось в расписании');
                 }
                 $data['schedule'] = $text;
-                $data['prev_state'] = 'wait_text';
                 if (strlen($text) > 200) {
                     return $this->replyToChat("Ошибка! Текст слишком блинный, опиши более кратко.");
                 }
-                $fsm->setState($telegram_id, 'confirm', $data);
                 $reply = "Проверь информацию:\n\n";
                 $reply .= "Изменения в расписании:\n";
                 $reply .= $data['schedule'] . "\n\n";
                 $reply .= "Все верно? Напиши 'Да' или 'Исправить'";
-                return Request::sendMessage([
+                file_put_contents(__DIR__ . '/debug_delay.log', date('c') . " FSM state: " . json_encode($state) . ", data: " . json_encode($data) . "\n", FILE_APPEND);
+                $response = Request::sendMessage([
                     'chat_id' => $chat_id,
                     'text' => $reply,
-                    'reply_markup' => mainMenuKeyboard($keyboard),
+                    'reply_markup' => confirmDelayKeyboard(),
                 ]);
+                $data['keyboard_message_id'] = $response->getResult()->getMessageId();
+                $fsm->setState($telegram_id, 'confirm', $data);
+                return $response;
             case 'confirm':
-                $data['prev_state'] = 'confirm';
-                if (mb_strtolower($text) === 'да') {
-                    $msg = "🚨 *Изменение в расписании*\n";
-                    $msg .= $custom_name . " (" . "@" . $message->getFrom()->getUsername() . ")\n";
+                file_put_contents(__DIR__ . '/debug_delay.log', date('c') . " FSM state: " . json_encode($state) . ", data: " . json_encode($data) . "\n", FILE_APPEND);
+                if ($callback && $callback->getData() === 'yes') {
+                    Request::editMessageReplyMarkup([
+                        'chat_id' => $chat_id,
+                        'message_id' => $data['keyboard_message_id'],
+                        'reply_markup' => new InlineKeyboard([])
+                    ]);
+                    $msg = "📅 *Изменение в расписании*\n";
+                    $msg .= escapeMarkdownV2($custom_name) . " \\(" . escapeMarkdownV2("@" . $username) . "\\)\n";
                     $msg .= "Изменения в расписании:\n";
-                    $msg .= "`" . $data['schedule'] . "`" . "\n";
+                    $msg .= "`" . escapeMarkdownV2($data['schedule']) . "`\n";
                     Request::sendMessage([
                         'chat_id' => $manager_chat_id,
                         'text' => $msg,
-                        'parse_mode' => 'Markdown'
+                        'parse_mode' => 'MarkdownV2'
                     ]);
                     $bd = "Изменения в расписании: " . $data['schedule'];
                     $stmt = $pdo->prepare("
@@ -92,35 +109,50 @@ class ScheduleCommand extends UserCommand
                     $stmt->execute([
                         ':user_id' => $telegram_id,
                         ':custom_name' => $custom_name,
-                        ':event_type' => 'schedule',
+                        ':event_type' => 'Изменение в расписании',
                         ':message_content' => $bd
                     ]);
                     $fsm->clearState($telegram_id);
                     Request::sendMessage([
                         'chat_id' => $chat_id,
-                        'text' => "Готово! Информация передана руководству",
+                        'text' => "Готово! Информация передана руководству.",
                     ]);
-                    return sendMainMenu($chat_id);
-                }
-                if (mb_strtolower($text) === 'исправить') {
-                    $fsm->setState($telegram_id, 'wait_text', $data);
                     return Request::sendMessage([
                         'chat_id' => $chat_id,
-                        'text' => 'Хорошо, напиши изменения заново:'
+                        'text' => "Хочешь отправить новое сообщение? Нажми «Меню»"
                     ]);
+                } elseif ($callback && $callback->getData() === 'edit') {
+                    Request::editMessageReplyMarkup([
+                        'chat_id' => $chat_id,
+                        'message_id' => $data['keyboard_message_id'],
+                        'reply_markup' => new InlineKeyboard([])
+                    ]);
+                    $response = Request::sendMessage([
+                        'chat_id' => $chat_id,
+                        'text' => 'Хорошо, напиши изменения заново:',
+                        'reply_markup' => mainMenuKeyboard(),
+                    ]);
+                    $data['keyboard_message_id'] = $response->getResult()->getMessageId();
+                    $fsm->setState($telegram_id, 'wait_text', $data);
+                    return $response;
+                } else {
+                    $response = Request::sendMessage([
+                        'chat_id' => $chat_id,
+                        'text' => "Нажми на кнопку 'Да' для подтверждения или 'Исправить', чтобы внести исправления.",
+                        'reply_markup' => confirmDelayKeyboard()
+                    ]);
+                    $data['keyboard_message_id'] = $response->getResult()->getMessageId();
+                    return $response;
                 }
-                return Request::sendMessage([
-                    'chat_id' => $chat_id,
-                    'text' => "Напиши 'Да' или 'Исправить'",
-                    'reply_markup' => mainMenuKeyboard($keyboard),
-                ]);
             default:
-                $fsm->setState($telegram_id, 'wait_text', $data);
-                return Request::sendMessage([
+                $response = Request::sendMessage([
                     'chat_id' => $chat_id,
                     'text' => "Укажи свое новое расписание или то, что изменилось в старом:",
-                    'reply_markup' => mainMenuKeyboard([])
+                    'reply_markup' => mainMenuKeyboard()
                 ]);
+                $data['keyboard_message_id'] = $response->getResult()->getMessageId();
+                $fsm->setState($telegram_id, 'wait_text', $data);
+                return $response;
         }
     }
 }

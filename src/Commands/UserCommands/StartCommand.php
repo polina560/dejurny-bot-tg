@@ -4,7 +4,6 @@ namespace UserCommands;
 
 use Longman\TelegramBot\Request;
 use Longman\TelegramBot\Commands\UserCommand;
-use Longman\TelegramBot\Entities\Keyboard;
 use Longman\TelegramBot\Entities\ServerResponse;
 
 class StartCommand extends UserCommand
@@ -31,22 +30,15 @@ class StartCommand extends UserCommand
             $fsm->setState($telegram_id, 'waiting_name');
             return Request::sendMessage([
                 'chat_id' => $chat_id,
-                'text' => 'Привет! Напиши, пожалуйста, своё имя.'
+                'text' => "Привет! Напиши, пожалуйста, своё имя и фамилию."
             ]);
         }
-        $keyboard = new Keyboard(
-            ['Опоздание'],
-            ['Ушел на больничный'],
-            ['Выхожу с больничного'],
-            ['Изменение расписания'],
-            ['Форс-мажор'],
-            ['Другое...']
-        );
-        $keyboard->setResizeKeyboard(true)->setOneTimeKeyboard(true);
+        $remove_keyboard = [ "remove_keyboard" => true ];
+        $remove_keyboard_json = json_encode($remove_keyboard);
         return Request::sendMessage([
             'chat_id'      => $chat_id,
-            'text'         => 'Выбери действие:',
-            'reply_markup' => $keyboard,
+            'text'         => 'Хочешь что-то сообщить? Нажми «Меню»',
+            'reply_markup' => $remove_keyboard_json
         ]);
     }
 }
