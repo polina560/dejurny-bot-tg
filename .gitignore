@@ -29,6 +29,7 @@ yarn-error.log
 /vendor/psr
 /vendor/ralouphie
 /vendor/symfony
+/vendor
 
 **/caddy
 frankenphp

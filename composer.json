@@ -1,8 +1,9 @@
 {
-    "require": {
-        "longman/telegram-bot": "^0.83.1",
-        "ext-pdo": "*",
-        "ext-json": "*",
-      "ext-curl": "*"
-    }
+  "require": {
+    "longman/telegram-bot": "^0.83.1",
+    "ext-pdo": "*",
+    "ext-json": "*",
+    "ext-curl": "*",
+    "vlucas/phpdotenv": "^5.6"
+  }
 }

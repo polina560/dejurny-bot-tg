@@ -1,18 +1,25 @@
 <?php
 
+use Dotenv\Dotenv;
+
+require_once __DIR__ . '/vendor/autoload.php';
+
+$dotenv = Dotenv::createMutable(__DIR__);
+$dotenv->load();
+
 return [
     'bot' => [
-        'token' => '7635041215:AAH6IOm3U4ZyXbjKAMi_mDMZ5rVU0R7_MBM',
-        'username' => 'testtestbottestbotbotbot'
+        'token' => $_ENV['BOT_TOKEN'] ?? '',
+        'username' => $_ENV['BOT_USERNAME'] ?? ''
     ],
     'db' => [
-        'host' => 'MySQL-8.4',
-        'port' => '3306',
-        'database' => '260000.notification-bot-copy',
-        'user' => 'root',
-        'password' => '123',
+        'host' => $_ENV['DB_HOST'] ?? '127.0.0.1',
+        'port' => $_ENV['DB_PORT'] ?? '3306',
+        'database' => $_ENV['DB_DATABASE'] ?? 'dejurny_bot',
+        'user' => $_ENV['DB_USERNAME'] ?? 'root',
+        'password' => $_ENV['DB_PASSWORD'] ?? '',
     ],
-    'manager_chat_id' => '-10033665221',
+    'manager_chat_id' => $_ENV['MANAGER_CHAT_ID'] ?? '',
     'sick_media' => [
         ['type' => 'photo', 'url' => 'https://drive.google.com/uc?export=download&id=1saC4mY2eCE5ps_oFKDMXRD7Tj3OiZZDC'],
         ['type' => 'photo', 'url' => 'https://drive.google.com/uc?export=download&id=1ZhcBZJoA_aL992kUFOs2Sm7liDQsTTrx'],
