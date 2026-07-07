@@ -161,9 +161,9 @@ class DelayCommand extends UserCommand
                         'reply_markup' => new InlineKeyboard([])
                     ]);
                     $msg = "⏰ *Опоздание*\n";
-                    $msg .= escapeMarkdownV2($custom_name) . " \\(" . escapeMarkdownV2("@" . $username) . "\\)\n";
+                    $msg .= escapeMarkdownV2($custom_name ?? '') . " \\(" . escapeMarkdownV2("@" . ($username ?? '')) . "\\)\n";
                     $msg .= "Опоздание на: `" . $data['delay_minutes'] . " мин`\n";
-                    $msg .= "Комментарий: `" . escapeMarkdownV2($data['reason']) . "`\n";
+                    $msg .= "Комментарий: `" . escapeMarkdownV2($data['reason'] ?? '') . "`\n";
                     $parame = [
                         'chat_id' => $manager_chat_id,
                         'text' => $msg,

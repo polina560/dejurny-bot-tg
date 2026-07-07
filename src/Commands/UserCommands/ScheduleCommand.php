@@ -93,9 +93,9 @@ class ScheduleCommand extends UserCommand
                         'reply_markup' => new InlineKeyboard([])
                     ]);
                     $msg = "📅 *Изменение в расписании*\n";
-                    $msg .= escapeMarkdownV2($custom_name) . " \\(" . escapeMarkdownV2("@" . $username) . "\\)\n";
+                    $msg .= escapeMarkdownV2($custom_name ?? '') . " \\(" . escapeMarkdownV2("@" . ($username ?? '')) . "\\)\n";
                     $msg .= "Изменения в расписании:\n";
-                    $msg .= "`" . escapeMarkdownV2($data['schedule']) . "`\n";
+                    $msg .= "`" . escapeMarkdownV2($data['schedule'] ?? '') . "`\n";
                     Request::sendMessage([
                         'chat_id' => $manager_chat_id,
                         'text' => $msg,

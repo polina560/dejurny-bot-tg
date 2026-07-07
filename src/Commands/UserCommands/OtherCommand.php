@@ -87,8 +87,8 @@ class OtherCommand extends UserCommand
                 ]);
                 if ($callback && $callback->getData() === 'yes') {
                     $msg = "🔔 *Просто оповещение*\n";
-                    $msg .= escapeMarkdownV2($custom_name) . " \\(" . escapeMarkdownV2("@" . $username) . "\\)\n";
-                    $msg .= "`" . escapeMarkdownV2($data['text']) . "`\n";
+                    $msg .= escapeMarkdownV2($custom_name ?? '') . " \\(" . escapeMarkdownV2("@" . ($username ?? '')) . "\\)\n";
+                    $msg .= "`" . escapeMarkdownV2($data['text'] ?? '') . "`\n";
                     Request::sendMessage([
                         'chat_id' => $manager_chat_id,
                         'text' => $msg,

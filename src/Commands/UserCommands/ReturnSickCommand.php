@@ -116,8 +116,8 @@ class ReturnSickCommand extends UserCommand
                 }
                 $data['history'][] = $state;
                 $msg = "💪 *Выход с больничного*\n";
-                $msg .= escapeMarkdownV2($custom_name) . " \\(" . escapeMarkdownV2("@" . $username) . "\\)\n";
-                $msg .= "Дата выхода: `" . escapeMarkdownV2($date) . "`\n";
+                $msg .= escapeMarkdownV2($custom_name ?? '' ) . " \\(" . escapeMarkdownV2("@" . ($username ?? '')) . "\\)\n";
+                $msg .= "Дата выхода: `" . escapeMarkdownV2($date ?? '') . "`\n";
                 Request::sendMessage([
                     'chat_id' => $manager_chat_id,
                     'text' => $msg,
@@ -168,8 +168,8 @@ class ReturnSickCommand extends UserCommand
                 $date = $text;
                 $data['prev_state'] = 'wait_manual_date';
                 $msg = "💪 *Выход с больничного*\n";
-                $msg .= escapeMarkdownV2($custom_name) . " \\(" . escapeMarkdownV2("@" . $username) . "\\)\n";
-                $msg .= "Дата выхода: `" . escapeMarkdownV2($date) . "`\n";
+                $msg .= escapeMarkdownV2($custom_name ?? '') . " \\(" . escapeMarkdownV2("@" . ($username ?? '')) . "\\)\n";
+                $msg .= "Дата выхода: `" . escapeMarkdownV2($date ?? '') . "`\n";
                 Request::sendMessage([
                     'chat_id' => $manager_chat_id,
                     'text' => $msg,

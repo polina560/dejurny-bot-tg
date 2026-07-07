@@ -209,9 +209,9 @@ class SickCommand extends UserCommand
                         'reply_markup' => new InlineKeyboard([])
                     ]);
                     $msg = "💊 *Больничный*\n";
-                    $msg .= escapeMarkdownV2($custom_name) . " \\(" . escapeMarkdownV2("@" . $username) . "\\)\n";
-                    $msg .= "Ориентировочно дней отсутствия: `" . escapeMarkdownV2($data['days']) . "`\n";
-                    $msg .= "Возможность работать из дома: `" . escapeMarkdownV2($data['remote']) . "`\n";
+                    $msg .= escapeMarkdownV2($custom_name ?? '') . " \\(" . escapeMarkdownV2("@" . ($username ?? '')) . "\\)\n";
+                    $msg .= "Ориентировочно дней отсутствия: `" . escapeMarkdownV2($data['days'] ?? '') . "`\n";
+                    $msg .= "Возможность работать из дома: `" . escapeMarkdownV2($data['remote'] ?? '') . "`\n";
                     if (!empty($data['comment'])) {
                         $msg .= "Комментарий: `{$data['comment']}`\n";
                     }
